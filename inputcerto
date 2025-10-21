@@ -1,14 +1,20 @@
 .data
 #=========MEMSAGENS===========#
-    mem_inicio : .asciiz "ESCOLHA SUA BEBIDA \nCafé puro (1)\nCafé com leite (2) \nMoccachino (3) \n"
-    memEscCafe : .asciiz "VOCE ESCOLHEU : CAFE"
-    memEscLeite : .asciiz "VOCE ESCOLHEU : CAFE COM LEITE"
-    memEscMoca : .asciiz "VOCE ESCOLHEU : MOCA"
+    mem_inicio : .asciiz "\n\nESCOLHA SUA BEBIDA \nCafé puro (1)\nCafé com leite (2) \nMoccachino (3)"
+    mem_EscTamanho : .asciiz "\n\nESCOLHA O TAMANHO \nPequeno (4)\nGrande (5)"
+    mem_EscAcucar : .asciiz "\n\nGOSTARIA DE ACUCAR \nSim (6)\nNao (7)"
+    memEscCafe : .asciiz "\nBEBIDA SELECIONADA : CAFE"
+    memEscLeite : .asciiz "\nVOCE ESCOLHEU : CAFE COM LEITE"
+    memEscMoca : .asciiz "\nVOCE ESCOLHEU : MOCA"
+    memEscTamPeq:.asciiz "\nVOCE ESCOLHEU : TAMANHO PEQUENO"
+    memEscTamGra:.asciiz "\nVOCE ESCOLHEU : TAMANHO GRANDE"
+    memEscAcucarSim : .asciiz "\nVOCE ESCOLHEU : QUERO ACUCAR"
+    memEscAcucarNao : .asciiz "\nVOCE ESCOLHEU : NAO QUERO ACUCAR"
 #=============================#
 
 #=========VARIAVEIS===========#
-	bebidaEscolhida: .word 0
 	
+    dose : .word 4
     read_keyboard:   .word 0xFFFF0014
     line:            .word 0xFFFF0012
 
@@ -28,14 +34,12 @@ tabela_valores:
 .globl main
 main:
 
-	
-	li 	      $v0, 4       #Comando
-	la 	      $a0, mem_inicio    #Carrega string (endereço).
+	#PRINTA MENSAGEM ESCOLHA SUA BEBIDA
+	li 	      $v0, 4     
+	la 	      $a0, mem_inicio    
 	syscall
+
 	
-    # registradores usados:
-    # $s0 -> acumulador decimal (valor atual)
-    # $s1 -> flag (0 = coletando, 1 = pronto) -- opcional
 loop_principal:
     li  $s0, 0            # zera acumulador antes de nova entrada
 coleta_loop:
@@ -105,11 +109,11 @@ processa_num:
     beq $s0 , 1 , cafe
     beq $s0 , 2 , leite
     beq $s0 , 3 , moca
-    # imprime newline
-    li   $a0, 10
-    li   $v0, 11
-    syscall
-	
+    beq $s0 , 4 , pequeno
+    beq $s0 , 5 , grande
+    beq $s0 , 6 , acucarSim
+    beq $s0 , 7 , acucarNao
+     
     	
     jr $ra
 
@@ -117,17 +121,52 @@ cafe :
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscCafe    #Carrega string (endereço).
 	syscall
-	j fim
+	j escolherBebida
 leite :
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscLeite #Carrega string (endereço).
 	syscall
-	j fim
+	j escolherBebida
 moca : 
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscMoca    #Carrega string (endereço).
 	syscall
-	j fim 
+	
+escolherBebida: 
+	li 	      $v0, 4     
+	la 	      $a0, mem_EscTamanho   
+	syscall
+	
+	j loop_principal
+pequeno: 
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memEscTamPeq
+	syscall
+	
+	j escolherAcucar 	
+grande: 
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memEscTamGra
+	syscall
+escolherAcucar: 
+	li 	      $v0, 4     
+	la 	      $a0, mem_EscAcucar   
+	syscall
+	
+	j loop_principal
+	
+acucarSim : 
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memEscAcucarSim
+	syscall
+	
+	j fim
+	
+acucarNao : 
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memEscAcucarNao
+	syscall
+	
 	
 fim:
     li  $v0, 10                   # Código de saída
