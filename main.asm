@@ -1,7 +1,7 @@
 .data
-#-----------------------------#
+#----------------------------#
 #			MENSAGENS
-#-----------------------------#
+#----------------------------#
     mem_inicio : .asciiz "\n\nESCOLHA SUA BEBIDA \nCafé puro (1)\nCafé com leite (2) \nMoccachino (3)"
     mem_EscTamanho : .asciiz "\n\nESCOLHA O TAMANHO \nPequeno (4)\nGrande (5)"
     mem_EscAcucar : .asciiz "\n\nGOSTARIA DE ACUCAR \nSim (6)\nNao (7)"
@@ -12,6 +12,9 @@
     memEscTamGra:.asciiz "\nVOCE ESCOLHEU : TAMANHO GRANDE"
     memEscAcucarSim : .asciiz "\nVOCE ESCOLHEU : QUERO ACUCAR"
     memEscAcucarNao : .asciiz "\nVOCE ESCOLHEU : NAO QUERO ACUCAR"
+    
+    memDosagem: .asciiz "\nliberando as doses"
+    memValvula: .asciiz "\nliberando a válvula de água"
 
 #----------------------------#
 #			VARIÁVEIS
@@ -191,6 +194,7 @@ pequeno:
 	la 	      $a0, memEscTamPeq
 	syscall
 	
+	li	$s2, 5	#carregando em $s2 o tempo que a valvula de água vai ficar aberta
 	
 	j bebidaDecidida	
 	
@@ -199,15 +203,27 @@ grande:
 	la 	      $a0, memEscTamGra
 	syscall
 	
+	li		$s2, 9			#carregando em $s2 o tempo que a valvula de água vai ficar aberta
 	mul		$s1, $s1, 2		#serão necessárias 2 doses de cada pó
 	
 	
 	
 
 bebidaDecidida:
-
+	
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memDosagem
+	syscall
+	
 	move	$a0, $s1
-	j		timer
+	jal		timer
+	
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memValvula
+	syscall
+	
+	move	$a0, $s2
+	jal		timer
 	
     li  $v0, 10                   # Código de saída
     syscall
@@ -232,7 +248,7 @@ espera:
     blt  	$t3, 1000, espera	#caso não tenha passado um segundo, repete
 
     addi 	$t0, $t0, 1		#somando 1 ao contador
-    li 		$t9, 10
+    li 		$t9, 99
     blt 	$t0, $t9, ok	#caso tenhamos extrapolado o numero de digitos, zera o contador
     li 		$t0, 0
 ok:
