@@ -1,7 +1,7 @@
 .data
-#----------------------------#
+#-----------------------------#
 #			MENSAGENS
-#----------------------------#
+#-----------------------------#
     mem_inicio : .asciiz "\n\nESCOLHA SUA BEBIDA \nCafé puro (1)\nCafé com leite (2) \nMoccachino (3)"
     mem_EscTamanho : .asciiz "\n\nESCOLHA O TAMANHO \nPequeno (4)\nGrande (5)"
     mem_EscAcucar : .asciiz "\n\nGOSTARIA DE ACUCAR \nSim (6)\nNao (7)"
