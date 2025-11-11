@@ -1,5 +1,7 @@
 .data
-#=========MEMSAGENS===========#
+#----------------------------#
+#			MENSAGENS
+#----------------------------#
     mem_inicio : .asciiz "\n\nESCOLHA SUA BEBIDA \nCafé puro (1)\nCafé com leite (2) \nMoccachino (3)"
     mem_EscTamanho : .asciiz "\n\nESCOLHA O TAMANHO \nPequeno (4)\nGrande (5)"
     mem_EscAcucar : .asciiz "\n\nGOSTARIA DE ACUCAR \nSim (6)\nNao (7)"
@@ -10,9 +12,13 @@
     memEscTamGra:.asciiz "\nVOCE ESCOLHEU : TAMANHO GRANDE"
     memEscAcucarSim : .asciiz "\nVOCE ESCOLHEU : QUERO ACUCAR"
     memEscAcucarNao : .asciiz "\nVOCE ESCOLHEU : NAO QUERO ACUCAR"
-#=============================#
+    
+    memDosagem: .asciiz "\nliberando as doses"
+    memValvula: .asciiz "\nliberando a válvula de água"
 
-#=========VARIAVEIS===========#
+#----------------------------#
+#			VARIÁVEIS
+#----------------------------#
 	
     dose : .word 4
     read_keyboard:   .word 0xFFFF0014
@@ -29,9 +35,14 @@ tabela_valores:
     .byte 4,5,6,7
     .byte 8,9,10,11
     .byte 12,13,14,15
+    
+tabela7seg:
+    .byte 0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F
 
-.text
+
+.text 
 .globl main
+
 main:
 
 	#PRINTA MENSAGEM ESCOLHA SUA BEBIDA
@@ -42,11 +53,13 @@ main:
 	
 loop_principal:
     li  $s0, 0            # zera acumulador antes de nova entrada
+    
 coleta_loop:
     # --- rotina de leitura de tecla (varredura) ---
     lw  $t1, read_keyboard
     lw  $t0, line
     li  $t3, 1
+    
 lendo_teclado:
     sb  $t3, 0($t0)
     lb  $t4, 0($t1)
@@ -54,10 +67,12 @@ lendo_teclado:
     sll $t3, $t3, 1
     ble $t3, 8, lendo_teclado
     j   coleta_loop        # continua coletando
+    
 # --- tecla detectada: traduz para índice (0..15) ---
 tecla_detectada:
     li  $t3, 0
     la  $t5, tabela_codigos
+    
 traduzir:
     lb  $t6, 0($t5)
     beq $t6, $t4, encontrou
@@ -65,6 +80,7 @@ traduzir:
     addi $t5, $t5, 1
     blt $t3, 16, traduzir
     j   coleta_loop        # não encontrada -> volta
+    
 encontrou:
     la  $t7, tabela_valores
     add $t7, $t7, $t3
@@ -103,55 +119,51 @@ terminou_coleta:
     # após processar, volta para início e permite nova entrada
     j   loop_principal
 
+
 # rotina de exemplo: processa_num (aqui apenas imprime inteiro no console)
 processa_num:
    
-    beq $s0 , 1 , cafe
-    beq $s0 , 2 , leite
+    beq $s0 , 1 , cafe_puro
+    beq $s0 , 2 , cafe_com_leite
     beq $s0 , 3 , moca
-    beq $s0 , 4 , pequeno
-    beq $s0 , 5 , grande
     beq $s0 , 6 , acucarSim
     beq $s0 , 7 , acucarNao
+    beq $s0 , 4 , pequeno
+    beq $s0 , 5 , grande
+    
      
     	
     jr $ra
 
-cafe : 
+cafe_puro : 
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscCafe    #Carrega string (endereço).
 	syscall
-	j escolherBebida
-leite :
+	
+	li	$s1, 1		#quantidade de pós
+	j escolherAcucar
+	
+cafe_com_leite :
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscLeite #Carrega string (endereço).
 	syscall
-	j escolherBebida
+	
+	li	$s1, 2		#quantidade de pós
+	j escolherAcucar
+
 moca : 
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscMoca    #Carrega string (endereço).
 	syscall
 	
-escolherBebida: 
-	li 	      $v0, 4     
-	la 	      $a0, mem_EscTamanho   
-	syscall
+	li	$s1, 2		#quantidade de pós
 	
-	j loop_principal
-pequeno: 
-	li 	      $v0, 4       #Comando
-	la 	      $a0, memEscTamPeq
-	syscall
 	
-	j escolherAcucar 	
-grande: 
-	li 	      $v0, 4       #Comando
-	la 	      $a0, memEscTamGra
-	syscall
 escolherAcucar: 
 	li 	      $v0, 4     
 	la 	      $a0, mem_EscAcucar   
 	syscall
+	
 	
 	j loop_principal
 	
@@ -160,14 +172,94 @@ acucarSim :
 	la 	      $a0, memEscAcucarSim
 	syscall
 	
-	j fim
+	addi	$s1, $s1, 1	#adicionando 1 à quantidade de pós que serão colocados no copo
+	
+	j escolherBebida
 	
 acucarNao : 
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscAcucarNao
 	syscall
 	
+escolherBebida: 
+	li 	      $v0, 4     
+	la 	      $a0, mem_EscTamanho   
+	syscall
 	
-fim:
+	j loop_principal	
+	
+	
+pequeno: 
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memEscTamPeq
+	syscall
+	
+	li	$s2, 5	#carregando em $s2 o tempo que a valvula de água vai ficar aberta
+	
+	j bebidaDecidida	
+	
+grande: 
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memEscTamGra
+	syscall
+	
+	li		$s2, 9			#carregando em $s2 o tempo que a valvula de água vai ficar aberta
+	mul		$s1, $s1, 2		#serão necessárias 2 doses de cada pó
+	
+	
+	
+
+bebidaDecidida:
+	
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memDosagem
+	syscall
+	
+	move	$a0, $s1
+	jal		timer
+	
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memValvula
+	syscall
+	
+	move	$a0, $s2
+	jal		timer
+	
     li  $v0, 10                   # Código de saída
     syscall
+    
+    
+# função timer 
+#recebe $a0 como o tempo que deve contar
+timer:
+	move	$t6, $a0	#salvando o tempo que vamos cronometrar em $t6
+    li 		$t0, 0		#inicializando contador
+    
+loop:
+    li 		$v0, 30	
+    syscall
+    move 	$t1, $a0	#salvando o valor do tempo atual em $t1
+
+espera:
+    li 		$v0, 30
+    syscall
+    move 	$t2, $a0			#salvando o valor do tempo atual em $t2
+    subu 	$t3, $t2, $t1		#calculando a diferença dos dois tempos pra descobrir quanto tempo passou
+    blt  	$t3, 1000, espera	#caso não tenha passado um segundo, repete
+
+    addi 	$t0, $t0, 1		#somando 1 ao contador
+    li 		$t9, 99
+    blt 	$t0, $t9, ok	#caso tenhamos extrapolado o numero de digitos, zera o contador
+    li 		$t0, 0
+ok:
+    move 	$a0, $t0
+    li 		$t5, 0xFFFF0010
+    la 		$t4, tabela7seg
+    add 	$t1, $t4, $a0
+    lbu 	$t1, 0($t1)
+    sb 		$t1, 0($t5)
+    beq		$t0, $t6, acabou	#caso tenhamos chegado no fim, ao invés de repetir o loop voltamos pro programa principal
+    j 		loop
+
+acabou:
+    jr $ra
