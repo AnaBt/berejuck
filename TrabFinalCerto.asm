@@ -54,15 +54,16 @@ tabela7seg:
 
 main:
 
-	#PRINTA MENSAGEM ESCOLHA SUA BEBIDA
-	li 	      $v0, 4     
-	la 	      $a0, mem_inicio    
-	syscall
-	
 	li $s3 , 1 #Quantidade de cafe
 	li $s4 , 20 #Qunatidade de leite
 	li $s5 , 20 #Quantidade de chocolate
 	li $s6 , 20 #Qauntidade de acucar 
+	
+inicio:	
+	#PRINTA MENSAGEM ESCOLHA SUA BEBIDA
+	li 	      $v0, 4     
+	la 	      $a0, mem_inicio    
+	syscall
 	
 loop_principal:
     li  $s0, 0            # zera acumulador antes de nova entrada
@@ -164,34 +165,44 @@ reabastecer_cafe :
 	la 	      $a0, memReaCafe #Carrega string (endereço).
 	syscall
 	
-	j 
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memDosagemCafe
+	syscall
+	
+	li $v0, 1        # syscall para imprimir inteiro
+	move $a0, $s3    # copia o valor de $s4 para $a0
+	syscall
+	
+	j inicio
 reabastecer_leite : 
 	li $s4 , 20
 	
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memReaLeite #Carrega string (endereço).
 	syscall
-	
+	j inicio
 reabastecer_choco : 
 	li $s5 , 20
 	
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memReaChoco #Carrega string (endereço).
 	syscall
-	
+	j inicio
 reabastecer_acucar : 
 	li $s6 , 20
 	
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memReaAcucar #Carrega string (endereço).
 	syscall
-	
+	j inicio
 cafe_puro : 
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscCafe    #Carrega string (endereço).
 	syscall
 	
 	li	$s1, 1		#quantidade de pós
+	
+	
 	
 	j escolherAcucar
 	
@@ -263,7 +274,6 @@ grande:
 	
 
 Ajusta_Dosagem : 
- 	
  	
 	sub $s3 , $s3 , $s7 # todos devem tirar do cafe
 	blt $s3 , 0 , reabastecer_mem
@@ -341,7 +351,6 @@ bebidaDecidida:
 	syscall
 	
 	
-	
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memDosagem
 	syscall
@@ -356,8 +365,7 @@ bebidaDecidida:
 	move	$a0, $s2
 	jal		timer
 	
-    li  $v0, 10                   # Código de saída
-    syscall
+    j inicio
 
 
 # função timer 
@@ -393,4 +401,4 @@ ok:
     j 		loop
 
 acabou:
-    jr $ra
+    	jr $ra
