@@ -55,7 +55,7 @@ tabela7seg:
 main:
 
 	li $s3 , 1 #Quantidade de cafe
-	li $s4 , 20 #Qunatidade de leite
+	li $s4 , 1 #Qunatidade de leite
 	li $s5 , 20 #Quantidade de chocolate
 	li $s6 , 20 #Qauntidade de acucar 
 	
@@ -202,8 +202,6 @@ cafe_puro :
 	
 	li	$s1, 1		#quantidade de pós
 	
-	
-	
 	j escolherAcucar
 	
 	
@@ -279,7 +277,6 @@ Ajusta_Dosagem :
 	blt $s3 , 0 , reabastecer_mem
 	li $t9 , 0 #zera o t9 
 	add $t9 , $t9 , $s7 # soma a dose do café nele
-	
 	beq $s1 , 2 , dosagem_cafe_leite
 	beq $s1 , 3 , dosagem_cafe_moca
 	beq $k0 , 1 , dosagem_acucar
@@ -288,6 +285,7 @@ Ajusta_Dosagem :
 
 dosagem_cafe_leite: 
 	sub $s4 , $s4 , $s7 #tira do leite
+	blt $s4 , 0 , reabastecer_mem
 	add $t9 , $t9 , $s7 # soma a dose do leite nele
 	beq $k0 , 1 , dosagem_acucar
 	j bebidaDecidida
@@ -296,7 +294,9 @@ dosagem_cafe_leite:
 dosagem_cafe_moca: 
 	
 	sub $s4 , $s4 , $s7 #tira do leite
+	blt $s4 , 0 , reabastecer_mem
 	sub $s5 , $s5 , $s7 #tira do chocolate
+	blt $s5 , 0 , reabastecer_mem
 	add $t9 , $t9 , $s7 # soma a dose do leite nele
 	add $t9 , $t9 , $s7 # soma a dose do chocolate nele
 	beq $k0 , 1 , dosagem_acucar
