@@ -68,8 +68,8 @@ tabela7seg:
 
 main:
 
-	li $s3 , 1 #Quantidade de cafe
-	li $s4 , 1 #Qunatidade de leite
+	li $s3 , 20 #Quantidade de cafe
+	li $s4 , 20 #Qunatidade de leite
 	li $s5 , 20 #Quantidade de chocolate
 	li $s6 , 20 #Qauntidade de acucar 
 	
@@ -195,6 +195,7 @@ reabastecer_leite :
 	la 	      $a0, memReaLeite #Carrega string (endereço).
 	syscall
 	j inicio
+	
 reabastecer_choco : 
 	li $s5 , 20
 	
@@ -282,7 +283,7 @@ grande:
 	syscall
 	
 	li 		$s7 , 2
-	li		$s2, 9			#carregando em $s2 o tempo que a valvula de água vai ficar aberta
+	li		$s2, 10			#carregando em $s2 o tempo que a valvula de água vai ficar aberta
 	
 
 Ajusta_Dosagem : 
@@ -392,7 +393,7 @@ bebidaDecidida:
 #função timer 
 #recebe $a0 como o tempo que deve contar
 timer:
-	move	$t6, $a0	#salvando o tempo que vamos cronometrar em $t6
+	move	$t7, $a0	#salvando o tempo que vamos cronometrar em $t7
     li 		$t0, 0		#inicializando contador
     
 loop:
@@ -412,13 +413,32 @@ espera:
     blt 	$t0, $t8, ok	#caso tenhamos extrapolado o numero de digitos, zera o contador
     li 		$t0, 0
 ok:
+	li		$t9, 10
+    divu    $t0, $t9
+    mfhi    $t2                  # unidades  = resto
+    mflo    $t3                  # dezenas   = quociente
+    
     move 	$a0, $t0
-    li 		$t5, 0xFFFF0010
     la 		$t4, tabela7seg
-    add 	$t1, $t4, $a0
-    lbu 	$t1, 0($t1)
-    sb 		$t1, 0($t5)
-    beq		$t0, $t6, acabou	#caso tenhamos chegado no fim, ao invés de repetir o loop voltamos pro programa principal
+    
+    # busca padrão do display da direita
+    add     $t5, $t4, $t2
+    lbu     $t5, 0($t5)
+
+    # busca padrão do display da esquerda
+    add     $t6, $t4, $t3
+    lbu     $t6, 0($t6)
+
+    #escreve nos dois displays
+    li      $t9, 0xFFFF0010      # display da direita
+    sb      $t5, 0($t9)
+
+    li      $s0, 0xFFFF0011      # display da esquerda
+    sb      $t6, 0($s0)
+   
+    
+    
+    beq		$t0, $t7, acabou	#caso tenhamos chegado no fim, ao invés de repetir o loop voltamos pro programa principal
     j 		loop
 
 acabou:
@@ -431,6 +451,19 @@ recibo:
 	move	$t0, $a0	#em t0 temos o identificador da bebida
 	move	$t1, $a1	#em t1 temos o tamanho
 	mul		$t2, $t0, $t1	#tamanho * qtd de pós = código da bebida
+	
+	li 	      $v0, 1       #Comando
+	move	  $a0, $t0   #Carrega int
+	syscall
+	
+	li 	      $v0, 1       #Comando
+	move	      $a0, $t1   #Carrega int
+	syscall
+	
+	li 	      $v0, 1       #Comando
+	move	      $a0, $t2  #Carrega int
+	syscall
+	
 	
 	#abrindo o arquivo para a escrita
 	li 	$v0, 13			#Comando para abrir um novo arquivo
