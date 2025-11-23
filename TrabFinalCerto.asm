@@ -24,7 +24,21 @@
     memReaAcucar : .asciiz "\nAcucar agora tem 20 doses"
     memDosagem: .asciiz "\nliberando as doses"
     memValvula: .asciiz "\nliberando a válvula de água"
-
+    
+    filename: .asciiz "Recibo.txt"
+    memTituloRecibo: .asciiz "                    Maquina de cafe - Trabalho final Organizacao de Computadores                    \n"
+	memAutores: .asciiz "                            Autores: Ana Julia Botega e Carolina Adilino                            \n\n"
+	memLinha: .asciiz "----------------------------------------------------------------------------------------------------\n"
+	memCabecalho: .asciiz "#Cód                                         Descricao                                         Valor\n"
+	
+	memReciboCafePeq:"01                                               Café Puro Pequeno                           R$ 2,00\n"
+	memReciboCafeLeitePeq:"02                                  Café com leite Pequeno                                   R$ 3,00\n"
+	memReciboMocaPeq:"03                                    Moccachino Pequeno                                     R$ 6,00\n"
+	memReciboCafeGra:"04                                               Café Puro Grande                            R$ 4,00\n"
+	memReciboCafeLeiteGra:"05                                     Café com leite Grande                                 R$ 6,00\n"
+	memReciboMocaGra:"06                                          Moccachino Grande                               R$ 12,00\n"
+	memTerminouCompra: .asciiz "\n\nObrigado por comprar conosco!\nColete seu recibo e volte sempre"
+	
 #----------------------------#
 #			VARIÁVEIS
 #----------------------------#
@@ -188,6 +202,7 @@ reabastecer_choco :
 	la 	      $a0, memReaChoco #Carrega string (endereço).
 	syscall
 	j inicio
+	
 reabastecer_acucar : 
 	li $s6 , 20
 	
@@ -195,6 +210,7 @@ reabastecer_acucar :
 	la 	      $a0, memReaAcucar #Carrega string (endereço).
 	syscall
 	j inicio
+	
 cafe_puro : 
 	li 	      $v0, 4       #Comando
 	la 	      $a0, memEscCafe    #Carrega string (endereço).
@@ -235,7 +251,6 @@ acucarSim :
 	la 	      $a0, memEscAcucarSim
 	syscall
 	
-	#addi	$s1, $s1, 1	#adicionando 1 à quantidade de pós que serão colocados no copo
 	li $k0 , 1 #se t9 igual a 1 ajusta a dose 
 	j escolherBebida
 	
@@ -268,7 +283,6 @@ grande:
 	
 	li 		$s7 , 2
 	li		$s2, 9			#carregando em $s2 o tempo que a valvula de água vai ficar aberta
-	#mul		$s1, $s1, 2		#serão necessárias 2 doses de cada pó
 	
 
 Ajusta_Dosagem : 
@@ -365,10 +379,17 @@ bebidaDecidida:
 	move	$a0, $s2
 	jal		timer
 	
+	#chamando a função para imprimir o recibo
+	
+	move	$a0, $s1	# manda como arg a qtd de pós
+	move 	$a1, $s7	# manda como arg o tamanho da bebida
+	jal		recibo
+	
+	
     j inicio
 
 
-# função timer 
+#função timer 
 #recebe $a0 como o tempo que deve contar
 timer:
 	move	$t6, $a0	#salvando o tempo que vamos cronometrar em $t6
@@ -402,3 +423,98 @@ ok:
 
 acabou:
     	jr $ra
+    	
+#função recibo 
+#recebe $a0 como a quantidade de pós que serão usados
+#recebe $a1 como o tamanho da bebida
+recibo:
+	move	$t0, $a0	#em t0 temos o identificador da bebida
+	move	$t1, $a1	#em t1 temos o tamanho
+	mul		$t2, $t0, $t1	#tamanho * qtd de pós = código da bebida
+	
+	#abrindo o arquivo para a escrita
+	li 	$v0, 13			#Comando para abrir um novo arquivo
+	la	$a0, filename	#Carrega o nome do arquivo a ser aberto
+	li	$a1, 1			#Aberto para a escrita
+	li	$a2, 0
+	syscall
+	move	$s6, $v0	#Salva o descritor do arquivo
+	
+	
+	#escrever no arquivo aberto nosso titulo
+	li 		$v0, 15		
+	move	$a0, $s6				#descritor do arquivo é passado	
+	la		$a1, memTituloRecibo	#o que vai ser escrito
+	li 		$a2, 101				#tamanho do buffer 
+	syscall
+	
+	#escrever no arquivo aberto o cabeçalho
+	li 		$v0, 15		
+	move	$a0, $s6				#descritor do arquivo é passado	
+	la		$a1, memAutores		#o que vai ser escrito
+	li 		$a2, 102				#tamanho do buffer 
+	syscall
+	
+	#escrever no arquivo aberto a linha pontilhada
+	li 		$v0, 15		
+	move	$a0, $s6			#descritor do arquivo é passado	
+	la		$a1, memLinha		#o que vai ser escrito
+	li 		$a2, 101			#tamanho do buffer 
+	syscall
+	
+	#escrever no arquivo aberto o Cabeçalho
+	li 		$v0, 15		
+	move	$a0, $s6			#descritor do arquivo é passado	
+	la		$a1, memCabecalho	#o que vai ser escrito
+	li 		$a2, 101			#tamanho do buffer 
+	syscall
+	
+	beq		$t2, 1, cafe_peq_recibo
+	beq		$t2, 2, bebida_recibo
+	beq		$t2, 3, mocca_peq_recibo
+	beq		$t2, 4, cafe_leite_gra_recibo	
+	beq		$t2, 6, mocca_gra_recibo
+	
+	cafe_peq_recibo:
+	la		$a1, memReciboCafePeq
+	j	escrever_bebida
+	
+	bebida_recibo:
+	beq		$t1, 2, cafe_gra_recibo
+	la		$a1, memReciboCafeLeitePeq
+	j	escrever_bebida
+	
+	cafe_gra_recibo:
+	la		$a1, memReciboCafeGra
+	j	escrever_bebida
+	
+	mocca_peq_recibo:
+	la		$a1, memReciboMocaPeq
+	j	escrever_bebida
+	
+	cafe_leite_gra_recibo:
+	la		$a1, memReciboCafeLeiteGra
+	j	escrever_bebida
+	
+	mocca_gra_recibo:
+	la		$a1, memReciboMocaGra
+	j	escrever_bebida
+	
+	escrever_bebida:
+	li 		$v0, 15		
+	move	$a0, $s6			#descritor do arquivo é passado	
+	li 		$a2, 101			#tamanho do buffer 
+	syscall
+		
+	#fechar o arquivo
+	li	$v0, 16			#comando para fechamento do arquivo
+	move	$a0, $s6	#descritor do arquivo é passado
+	syscall				#arquivo é fechado pelo sistema operacional
+	
+	
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memTerminouCompra   #Carrega string (endereço).
+	syscall
+	
+   	# Encerrar programa
+   	jr	$ra
