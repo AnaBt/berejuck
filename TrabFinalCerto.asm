@@ -68,6 +68,43 @@ tabela7seg:
 
 main:
 
+	#abrindo o arquivo para a escrita
+	li 	$v0, 13			#Comando para abrir um novo arquivo
+	la	$a0, filename	#Carrega o nome do arquivo a ser aberto
+	li	$a1, 1			#Aberto para a escrita
+	li	$a2, 0
+	syscall
+	move	$s7, $v0	#Salva o descritor do arquivo
+	
+	
+	#escrever no arquivo aberto nosso titulo
+	li 		$v0, 15		
+	move	$a0, $s7				#descritor do arquivo é passado	
+	la		$a1, memTituloRecibo	#o que vai ser escrito
+	li 		$a2, 101				#tamanho do buffer 
+	syscall
+	
+	#escrever no arquivo aberto os autores
+	li 		$v0, 15		
+	move	$a0, $s7			#descritor do arquivo é passado	
+	la		$a1, memAutores		#o que vai ser escrito
+	li 		$a2, 102			#tamanho do buffer 
+	syscall
+	
+	#escrever no arquivo aberto a linha pontilhada
+	li 		$v0, 15		
+	move	$a0, $s7			#descritor do arquivo é passado	
+	la		$a1, memLinha		#o que vai ser escrito
+	li 		$a2, 101			#tamanho do buffer 
+	syscall
+	
+	#escrever no arquivo aberto o Cabeçalho
+	li 		$v0, 15		
+	move	$a0, $s7			#descritor do arquivo é passado	
+	la		$a1, memCabecalho	#o que vai ser escrito
+	li 		$a2, 101			#tamanho do buffer 
+	syscall
+
 	li $s3 , 20 #Quantidade de cafe
 	li $s4 , 20 #Qunatidade de leite
 	li $s5 , 20 #Quantidade de chocolate
@@ -273,7 +310,7 @@ pequeno:
 	la 	      $a0, memEscTamPeq
 	syscall
 	
-	li $s7 , 1
+	li $t0 , 1
 	li	$s2, 5	#carregando em $s2 o tempo que a valvula de água vai ficar aberta
 	j Ajusta_Dosagem	
 	
@@ -282,16 +319,16 @@ grande:
 	la 	      $a0, memEscTamGra
 	syscall
 	
-	li 		$s7 , 2
+	li 		$t0 , 2
 	li		$s2, 10			#carregando em $s2 o tempo que a valvula de água vai ficar aberta
 	
 
 Ajusta_Dosagem : 
  	
-	sub $s3 , $s3 , $s7 # todos devem tirar do cafe
+	sub $s3 , $s3 , $t0 # todos devem tirar do cafe
 	blt $s3 , 0 , reabastecer_mem
 	li $t9 , 0 #zera o t9 
-	add $t9 , $t9 , $s7 # soma a dose do café nele
+	add $t9 , $t9 , $t0 # soma a dose do café nele
 	beq $s1 , 2 , dosagem_cafe_leite
 	beq $s1 , 3 , dosagem_cafe_moca
 	beq $k0 , 1 , dosagem_acucar
@@ -299,27 +336,27 @@ Ajusta_Dosagem :
 	
 
 dosagem_cafe_leite: 
-	sub $s4 , $s4 , $s7 #tira do leite
+	sub $s4 , $s4 , $t0 #tira do leite
 	blt $s4 , 0 , reabastecer_mem
-	add $t9 , $t9 , $s7 # soma a dose do leite nele
+	add $t9 , $t9 , $t0 # soma a dose do leite nele
 	beq $k0 , 1 , dosagem_acucar
 	j bebidaDecidida
 	
 
 dosagem_cafe_moca: 
 	
-	sub $s4 , $s4 , $s7 #tira do leite
+	sub $s4 , $s4 , $t0 #tira do leite
 	blt $s4 , 0 , reabastecer_mem
-	sub $s5 , $s5 , $s7 #tira do chocolate
+	sub $s5 , $s5 , $t0 #tira do chocolate
 	blt $s5 , 0 , reabastecer_mem
-	add $t9 , $t9 , $s7 # soma a dose do leite nele
-	add $t9 , $t9 , $s7 # soma a dose do chocolate nele
+	add $t9 , $t9 , $t0 # soma a dose do leite nele
+	add $t9 , $t9 , $t0 # soma a dose do chocolate nele
 	beq $k0 , 1 , dosagem_acucar
 	j bebidaDecidida
 	
 dosagem_acucar : 
-	sub $s6 , $s6 , $s7 #tira do acucar
-	add $t9, $t9 , $s7 # soma a dose do acucar nele
+	sub $s6 , $s6 , $t0 #tira do acucar
+	add $t9, $t9 , $t0 # soma a dose do acucar nele
 	j bebidaDecidida
 	
 reabastecer_mem: 
@@ -383,7 +420,8 @@ bebidaDecidida:
 	#chamando a função para imprimir o recibo
 	
 	move	$a0, $s1	# manda como arg a qtd de pós
-	move 	$a1, $s7	# manda como arg o tamanho da bebida
+	move 	$a1, $t0	# manda como arg o tamanho da bebida
+	move	$a2, $s7	#manda como arg o descritor do arquivo
 	jal		recibo
 	
 	
@@ -447,9 +485,11 @@ acabou:
 #função recibo 
 #recebe $a0 como a quantidade de pós que serão usados
 #recebe $a1 como o tamanho da bebida
+#recebe $a2 como o descritor do arqv q vamos escrever
 recibo:
 	move	$t0, $a0	#em t0 temos o identificador da bebida
 	move	$t1, $a1	#em t1 temos o tamanho
+	move	$t3, $a2	#em t2 temos o descritor do arqv
 	mul		$t2, $t0, $t1	#tamanho * qtd de pós = código da bebida
 	
 	li 	      $v0, 1       #Comando
@@ -461,59 +501,24 @@ recibo:
 	syscall
 	
 	li 	      $v0, 1       #Comando
-	move	      $a0, $t2  #Carrega int
+	move	  $a0, $t2  #Carrega int
 	syscall
 	
 	
-	#abrindo o arquivo para a escrita
-	li 	$v0, 13			#Comando para abrir um novo arquivo
-	la	$a0, filename	#Carrega o nome do arquivo a ser aberto
-	li	$a1, 1			#Aberto para a escrita
-	li	$a2, 0
-	syscall
-	move	$s6, $v0	#Salva o descritor do arquivo
 	
 	
-	#escrever no arquivo aberto nosso titulo
-	li 		$v0, 15		
-	move	$a0, $s6				#descritor do arquivo é passado	
-	la		$a1, memTituloRecibo	#o que vai ser escrito
-	li 		$a2, 101				#tamanho do buffer 
-	syscall
-	
-	#escrever no arquivo aberto o cabeçalho
-	li 		$v0, 15		
-	move	$a0, $s6				#descritor do arquivo é passado	
-	la		$a1, memAutores		#o que vai ser escrito
-	li 		$a2, 102				#tamanho do buffer 
-	syscall
-	
-	#escrever no arquivo aberto a linha pontilhada
-	li 		$v0, 15		
-	move	$a0, $s6			#descritor do arquivo é passado	
-	la		$a1, memLinha		#o que vai ser escrito
-	li 		$a2, 101			#tamanho do buffer 
-	syscall
-	
-	#escrever no arquivo aberto o Cabeçalho
-	li 		$v0, 15		
-	move	$a0, $s6			#descritor do arquivo é passado	
-	la		$a1, memCabecalho	#o que vai ser escrito
-	li 		$a2, 101			#tamanho do buffer 
-	syscall
-	
-	beq		$t2, 1, cafe_peq_recibo
-	beq		$t2, 2, bebida_recibo
-	beq		$t2, 3, mocca_peq_recibo
-	beq		$t2, 4, cafe_leite_gra_recibo	
-	beq		$t2, 6, mocca_gra_recibo
+	beq		$t2, 5, cafe_peq_recibo
+	beq		$t2, 10, bebida_recibo
+	beq		$t2, 15, mocca_peq_recibo
+	beq		$t2, 20, cafe_leite_gra_recibo	
+	beq		$t2, 30, mocca_gra_recibo
 	
 	cafe_peq_recibo:
 	la		$a1, memReciboCafePeq
 	j	escrever_bebida
 	
 	bebida_recibo:
-	beq		$t1, 2, cafe_gra_recibo
+	beq		$t1, 10, cafe_gra_recibo
 	la		$a1, memReciboCafeLeitePeq
 	j	escrever_bebida
 	
@@ -535,19 +540,19 @@ recibo:
 	
 	escrever_bebida:
 	li 		$v0, 15		
-	move	$a0, $s6			#descritor do arquivo é passado	
+	move	$a0, $t3			#descritor do arquivo é passado	
 	li 		$a2, 101			#tamanho do buffer 
 	syscall
 		
 	#fechar o arquivo
-	li	$v0, 16			#comando para fechamento do arquivo
-	move	$a0, $s6	#descritor do arquivo é passado
-	syscall				#arquivo é fechado pelo sistema operacional
+	#li	$v0, 16			#comando para fechamento do arquivo
+	#move	$a0, $s6	#descritor do arquivo é passado
+	#syscall				#arquivo é fechado pelo sistema operacional
 	
 	
-	li 	      $v0, 4       #Comando
-	la 	      $a0, memTerminouCompra   #Carrega string (endereço).
-	syscall
+	#li 	      $v0, 4       #Comando
+	#la 	      $a0, memTerminouCompra   #Carrega string (endereço).
+	#syscall
 	
    	# Encerrar programa
    	jr	$ra
