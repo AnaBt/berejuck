@@ -528,19 +528,6 @@ recibo:
 	move	$t1, $a1	#em t1 temos o tamanho
 	move	$t3, $a2	#em t2 temos o descritor do arqv
 	mul		$t2, $t0, $t1	#tamanho * qtd de pós = código da bebida
-	
-	li 	      $v0, 1       #Comando
-	move	  $a0, $t0   #Carrega int
-	syscall
-	
-	li 	      $v0, 1       #Comando
-	move	      $a0, $t1   #Carrega int
-	syscall
-	
-	li 	      $v0, 1       #Comando
-	move	  $a0, $t2  #Carrega int
-	syscall
-	
 
 	beq		$t2, 5, cafe_peq_recibo
 	beq		$t2, 10, bebida_recibo
