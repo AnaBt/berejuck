@@ -2,7 +2,7 @@
 #----------------------------#
 #			MENSAGENS
 #----------------------------#
-    mem_inicio : .asciiz "\n\nESCOLHA SUA BEBIDA \nCafé puro (1)\nCafé com leite (2) \nMoccachino (3)"
+    mem_inicio : .asciiz "\n\nESCOLHA SUA BEBIDA \nCafé puro (1)\nCafé com leite (2) \nMoccachino (3) \nEncerrar compra (13)"
     mem_EscTamanho : .asciiz "\n\nESCOLHA O TAMANHO \nPequeno (4)\nGrande (5)"
     mem_EscAcucar : .asciiz "\n\nGOSTARIA DE ACUCAR \nSim (6)\nNao (7)"
     memEscCafe : .asciiz "\nBEBIDA SELECIONADA : CAFE"
@@ -13,7 +13,7 @@
     memEscAcucarSim : .asciiz "\nVOCE ESCOLHEU : QUERO ACUCAR"
     memEscAcucarNao : .asciiz "\nVOCE ESCOLHEU : NAO QUERO ACUCAR"
     memDosagemLeite : .asciiz "\nQUANTIDADE DE LEITE DISPONIVEL : "
-    memDosagemCafe : .asciiz "\nQUANTIDADE DE CAFE DISPONIVEL : "
+    memDosagemCafe : .asciiz "\n\nQUANTIDADE DE CAFE DISPONIVEL : "
     memDosagemChocolate : .asciiz "\nQUANTIDADE DE CHOCOLATE DISPONIVEL : "
     memDosagemAcucar : .asciiz "\nQUANTIDADE DE ACUCAR DISPONIVEL : "
     memAcabou : .asciiz "\nINGREDIENTE(S) FALTANDO! , PARA REABASTECER APERTE 8: "
@@ -22,22 +22,22 @@
     memReaLeite : .asciiz "\nLeite agora tem 20 doses"
     memReaChoco : .asciiz "\nChocolate agora tem 20 doses"
     memReaAcucar : .asciiz "\nAcucar agora tem 20 doses"
-    memDosagem: .asciiz "\nliberando as doses"
+    memDosagem: .asciiz "\n\nliberando as doses"
     memValvula: .asciiz "\nliberando a válvula de água"
     
     filename: .asciiz "Recibo.txt"
     memTituloRecibo: .asciiz "                    Maquina de cafe - Trabalho final Organizacao de Computadores                    \n"
 	memAutores: .asciiz "                            Autores: Ana Julia Botega e Carolina Adilino                            \n\n"
 	memLinha: .asciiz "----------------------------------------------------------------------------------------------------\n"
-	memCabecalho: .asciiz "#Cód                                         Descricao                                         Valor\n"
+	memCabecalho: .asciiz 	"#Cód                                  Descricao                                                Valor\n"
 	
-	memReciboCafePeq:"01                                               Café Puro Pequeno                           R$ 2,00\n"
-	memReciboCafeLeitePeq:"02                                  Café com leite Pequeno                                   R$ 3,00\n"
-	memReciboMocaPeq:"03                                    Moccachino Pequeno                                     R$ 6,00\n"
-	memReciboCafeGra:"04                                               Café Puro Grande                            R$ 4,00\n"
-	memReciboCafeLeiteGra:"05                                     Café com leite Grande                                 R$ 6,00\n"
-	memReciboMocaGra:"06                                          Moccachino Grande                               R$ 12,00\n"
-	memTerminouCompra: .asciiz "\n\nObrigado por comprar conosco!\nColete seu recibo e volte sempre"
+	memReciboCafePeq:		"01                                    Café Puro Pequeno                                      R$ 2,00\n"
+	memReciboCafeLeitePeq:	"02                                    Café com leite Pequeno                                 R$ 3,00\n"
+	memReciboMocaPeq:		"03                                    Moccachino Pequeno                                     R$ 6,00\n"
+	memReciboCafeGra:		"04                                    Café Puro Grande                                       R$ 4,00\n"
+	memReciboCafeLeiteGra:	"05                                    Café com leite Grande                                  R$ 6,00\n"
+	memReciboMocaGra:		"06                                    Moccachino Grande                                     R$ 12,00\n"
+	memTerminouCompra: .asciiz "\n\nObrigado por comprar conosco!\nColete seu recibo e volte sempre\n"
 	
 #----------------------------#
 #			VARIÁVEIS
@@ -187,6 +187,8 @@ terminou_coleta:
 
 # rotina de exemplo: processa_num (aqui apenas imprime inteiro no console)
 processa_num:
+	addi $sp, $sp, -4
+    sw $ra, 0($sp)
    
     beq $s0 , 1 , cafe_puro
     beq $s0 , 2 , cafe_com_leite
@@ -200,6 +202,12 @@ processa_num:
     beq $s0 , 10 , reabastecer_leite
     beq $s0 , 11, reabastecer_choco
     beq $s0 , 12 , reabastecer_acucar
+    
+    move	$a0, $s7	#mandando o descritor do arq como argumento
+    beq 	$s0, 13, finalizar_compra
+    
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4
     
     jr $ra
 reabastecer : 
@@ -289,7 +297,7 @@ acucarSim :
 	la 	      $a0, memEscAcucarSim
 	syscall
 	
-	li $k0 , 1 #se t9 igual a 1 ajusta a dose 
+	li $t1 , 1 #se t9 igual a 1 ajusta a dose 
 	j escolherBebida
 	
 acucarNao : 
@@ -331,7 +339,7 @@ Ajusta_Dosagem :
 	add $t9 , $t9 , $t0 # soma a dose do café nele
 	beq $s1 , 2 , dosagem_cafe_leite
 	beq $s1 , 3 , dosagem_cafe_moca
-	beq $k0 , 1 , dosagem_acucar
+	beq $t1 , 1 , dosagem_acucar
 	j bebidaDecidida
 	
 
@@ -339,7 +347,7 @@ dosagem_cafe_leite:
 	sub $s4 , $s4 , $t0 #tira do leite
 	blt $s4 , 0 , reabastecer_mem
 	add $t9 , $t9 , $t0 # soma a dose do leite nele
-	beq $k0 , 1 , dosagem_acucar
+	beq $t1 , 1 , dosagem_acucar
 	j bebidaDecidida
 	
 
@@ -351,7 +359,7 @@ dosagem_cafe_moca:
 	blt $s5 , 0 , reabastecer_mem
 	add $t9 , $t9 , $t0 # soma a dose do leite nele
 	add $t9 , $t9 , $t0 # soma a dose do chocolate nele
-	beq $k0 , 1 , dosagem_acucar
+	beq $t1 , 1 , dosagem_acucar
 	j bebidaDecidida
 	
 dosagem_acucar : 
@@ -426,6 +434,35 @@ bebidaDecidida:
 	
 	
     j inicio
+
+
+
+#função acabou compra
+#recebe como arg $a0 - descritor do arquivo
+finalizar_compra:
+	move $t0, $a0
+	
+	#escrever no arquivo aberto a linha pontilhada
+	li 		$v0, 15		
+	move	$a0, $t0			#descritor do arquivo é passado	
+	la		$a1, memLinha		#o que vai ser escrito
+	li 		$a2, 101			#tamanho do buffer 
+	syscall
+
+	#fechar o arquivo
+	li	$v0, 16			#comando para fechamento do arquivo
+	move	$a0, $t0	#descritor do arquivo é passado
+	syscall				#arquivo é fechado pelo sistema operacional
+	
+	
+	li 	      $v0, 4       #Comando
+	la 	      $a0, memTerminouCompra   #Carrega string (endereço).
+	syscall
+	
+	
+	li		$v0, 10
+	syscall
+	
 
 
 #função timer 
@@ -504,9 +541,7 @@ recibo:
 	move	  $a0, $t2  #Carrega int
 	syscall
 	
-	
-	
-	
+
 	beq		$t2, 5, cafe_peq_recibo
 	beq		$t2, 10, bebida_recibo
 	beq		$t2, 15, mocca_peq_recibo
@@ -543,16 +578,6 @@ recibo:
 	move	$a0, $t3			#descritor do arquivo é passado	
 	li 		$a2, 101			#tamanho do buffer 
 	syscall
-		
-	#fechar o arquivo
-	#li	$v0, 16			#comando para fechamento do arquivo
-	#move	$a0, $s6	#descritor do arquivo é passado
-	#syscall				#arquivo é fechado pelo sistema operacional
-	
-	
-	#li 	      $v0, 4       #Comando
-	#la 	      $a0, memTerminouCompra   #Carrega string (endereço).
-	#syscall
 	
    	# Encerrar programa
    	jr	$ra
